@@ -7,6 +7,8 @@ function App() {
     const [popUp, setPopup] = useState(false);
     const [films, setFilms] = useState([]);
     const [page, setPage] = useState(1)
+    const [casheFilms, setCacheFilms] = useState(new Map())
+
 
 
 
@@ -16,15 +18,29 @@ function App() {
             .then(data => setData(data.results))
     },[page])
 
-    const showFilms = async (movies) => {
-        setPopup(true)
-        let res =  await Promise.all(movies.map((item)=> {
-        return  fetch(item).then(res=> res.json().then(data=> data))
-        }))
+    const showFilms = async (name, movies) => {
+        if(casheFilms.get(name)) {
+                                    // Loading movies from cache
+            setPopup(true)
+            let filmsFromCashe = casheFilms.get(name).map((v)=> v)
+            setFilms(filmsFromCashe)
 
-     setFilms(res)
+        }else {
+                                    // Get Movies from Api
+            setPopup(true)
+            let res =  await Promise.all(movies.map((item)=> {
+                return  fetch(item).then(res=> res.json().then(data=> data))
+            }))
+            casheFilms.set(name, res)
+            setFilms(res)
+
+        }
+
+console.log(casheFilms)
 
     }
+
+
 
 const getNextPage = () => {
         setPage(page+1)
@@ -46,7 +62,7 @@ const getNextPage = () => {
                             <div className="content">
                                 <div className="content-overlay"></div>
                                 <div className="content-details fadeIn-top">
-                                    <button className="movies-button" onClick={()=>showFilms(item.films)}>Films</button>
+                                    <button className="movies-button" onClick={()=>showFilms(item.name, item.films)}>Films</button>
                                     <h3>height: {item.height}</h3>
                                     <h3>gender: {item.gender}</h3>
                                     <h3>eye color: {item.eye_color}</h3>
